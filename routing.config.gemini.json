@@ -1,0 +1,44 @@
+{
+  "tiers": {
+    "fast": "gemini/gemini-2.5-flash",
+    "reasoning": "gemini/gemini-2.5-flash",
+    "coding": "gemini/gemini-2.5-flash",
+    "fallback": "gemini/gemini-2.5-flash"
+  },
+  "routes": {
+    "file_search": {
+      "low": "fast",
+      "medium": "fast",
+      "high": "fast"
+    },
+    "planning": {
+      "low": "fast",
+      "medium": "reasoning",
+      "high": "reasoning"
+    },
+    "refactoring": {
+      "low": "coding",
+      "medium": "coding",
+      "high": "coding"
+    },
+    "coding": {
+      "low": "coding",
+      "medium": "coding",
+      "high": "coding"
+    },
+    "debugging": {
+      "low": "reasoning",
+      "medium": "reasoning",
+      "high": "reasoning"
+    },
+    "fallback": {
+      "low": "fallback",
+      "medium": "fallback",
+      "high": "fallback"
+    }
+  },
+  "fallback_chain": [
+    "gemini/gemini-2.5-flash",
+    "gemini/gemini-2.0-flash"
+  ]
+}
