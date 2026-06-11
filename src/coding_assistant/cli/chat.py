@@ -1,4 +1,27 @@
-"""Interactive terminal chat against a running coding-assistant server."""
+"""
+Interactive Terminal Chat Client for CodeCopilot
+
+Provides a friendly terminal interface to interact with the CodeCopilot server.
+
+Features:
+  • Natural language queries about your codebase
+  • Safe tool execution (files, shell, tests, etc.)
+  • Real-time responses with structured reasoning
+  • Slash commands for navigation and control
+
+Usage:
+  coding-assistant chat --workspace /path/to/project
+  
+Examples:
+  "What are the main entry points?"
+  "Find all TODO comments"
+  "Explain the authentication flow"
+  "/workspace /path/to/other/project"
+  "/status" - show current settings
+  "/help" - list all commands
+
+Author: CodeCopilot Team
+"""
 
 from __future__ import annotations
 
@@ -10,35 +33,57 @@ from coding_assistant.config import Settings, get_settings
 
 
 class _Colors:
+    """ANSI color formatting for terminal output."""
+    
     def __init__(self, enabled: bool) -> None:
         self._on = enabled
 
     def _c(self, code: str, text: str) -> str:
+        """Apply ANSI color code if colors are enabled."""
         if not self._on:
             return text
         return f"\033[{code}m{text}\033[0m"
 
     def user_label(self, text: str) -> str:
+        """Cyan: User input label."""
         return self._c("36", text)
 
     def assistant_label(self, text: str) -> str:
+        """Green: Assistant response label."""
         return self._c("32", text)
 
     def dim(self, text: str) -> str:
+        """Dim/gray: Helper text."""
         return self._c("2", text)
 
     def error(self, text: str) -> str:
+        """Red: Error messages."""
         return self._c("31", text)
 
     def warn(self, text: str) -> str:
+        """Yellow: Warning messages."""
         return self._c("33", text)
 
 
+# List of supported slash commands for quick reference
 SLASH_COMMANDS = frozenset({"help", "exit", "quit", "workspace", "status"})
 
 
 def parse_slash_command(line: str) -> tuple[str | None, str]:
-    """Return (command, arg) for /cmd args or (None, line) for normal input."""
+    """
+    Parse a slash command from user input.
+    
+    Returns:
+      (command_name, argument) for /cmd args
+      (None, original_line) for normal text input
+      
+    Example:
+      parse_slash_command("/workspace /home/user/project")
+      → ("workspace", "/home/user/project")
+      
+      parse_slash_command("What is this?")
+      → (None, "What is this?")
+    """
     stripped = line.strip()
     if not stripped.startswith("/"):
         return None, line
