@@ -547,7 +547,7 @@
             // Add user message
             addMessage('user', message);
             setLoading(true);
-            document.getElementById('headerInfo').textContent = 'Thinking...';
+            document.getElementById('headerInfo').textContent = 'Processing...';
 
             try {
                 const response = await fetch(`${API_BASE}/v1/runs`, {
@@ -560,24 +560,42 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`API Error: ${response.status}`);
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || `API Error ${response.status}: ${response.statusText}`);
                 }
 
                 const data = await response.json();
                 
-                // Poll for completion if needed
-                let result = data;
-                if (data.status === 'processing' || data.status === 'pending') {
-                    result = await pollRunStatus(data.id);
+                // Poll for completion
+                if (data.id) {
+                    const result = await pollRunStatus(data.id);
+                    
+                    if (result.error) {
+                        addMessage('assistant', `<span class="error">❌ Error: ${result.error}</span>`);
+                    } else {
+                        const assistantMessage = result.final_response || result.message || 'No response generated';
+                        addMessage('assistant', assistantMessage);
+                    }
+                } else {
+                    addMessage('assistant', `<span class="error">❌ Failed to create run</span>`);
                 }
-
-                const assistantMessage = result.response || result.message || 'Processing...';
-                addMessage('assistant', assistantMessage);
+                
                 document.getElementById('headerInfo').textContent = 'Ready to help';
 
             } catch (error) {
                 console.error('Error:', error);
-                addMessage('assistant', `<span class="error">❌ Error: ${error.message}</span>`);
+                let errorMsg = error.message;
+                
+                // Provide helpful error messages
+                if (errorMsg.includes('429') || errorMsg.includes('quota')) {
+                    errorMsg = 'API quota exceeded. Please check your API keys in .env file.';
+                } else if (errorMsg.includes('401') || errorMsg.includes('authentication')) {
+                    errorMsg = 'Authentication failed. Please configure valid API keys in .env';
+                } else if (errorMsg.includes('Connection refused')) {
+                    errorMsg = 'Cannot connect to server. Make sure it\'s running on http://127.0.0.1:8000';
+                }
+                
+                addMessage('assistant', `<span class="error">❌ ${errorMsg}</span>`);
                 document.getElementById('headerInfo').textContent = 'Error occurred';
             } finally {
                 setLoading(false);
@@ -585,26 +603,32 @@
         }
 
         // Poll run status
-        async function pollRunStatus(runId, maxAttempts = 30) {
+        async function pollRunStatus(runId, maxAttempts = 60) {
             for (let i = 0; i < maxAttempts; i++) {
                 try {
                     const response = await fetch(`${API_BASE}/v1/runs/${runId}`);
                     if (!response.ok) throw new Error('Failed to fetch run status');
                     
                     const data = await response.json();
-                    if (data.status === 'completed' || data.status === 'done') {
+                    
+                    // Check for terminal states
+                    if (data.status === 'completed' || data.status === 'COMPLETED') {
                         return data;
                     }
                     
-                    if (data.status === 'failed' || data.status === 'error') {
-                        throw new Error(data.error || 'Run failed');
+                    if (data.status === 'failed' || data.status === 'FAILED') {
+                        return data;  // Return with error field
                     }
-
-                    // Wait before next poll
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // Still running - wait and retry
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 } catch (error) {
                     console.error('Poll error:', error);
-                    throw error;
+                    if (i === maxAttempts - 1) {
+                        throw new Error('Request timeout - no response after 60 seconds');
+                    }
+                    // Continue polling on error
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
             }
             throw new Error('Request timeout');
