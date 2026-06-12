@@ -1,184 +1,270 @@
-# CodeCopilot: Intelligent Coding Assistant
+<div align="center">
 
-An AI-powered coding assistant that understands your codebase and helps you build software faster. Built with LangGraph orchestration, structured tool execution, and a FastAPI control-plane API.
+# 🤖 CodeCopilot
 
-## What It Does
+### AI-Powered Coding Assistant — Think, Plan, Execute
 
-✨ **Code Understanding** - Analyzes and indexes your repository
-🔧 **Tool Integration** - Runs safe tool commands (filesystem, build, test, etc.)
-🎯 **Structured Reasoning** - Uses LLMs with approval workflows for critical operations
-📊 **Observability** - Built-in tracing and metrics for debugging and monitoring
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-codecopilot.onrender.com-6366f1?style=for-the-badge&logo=render&logoColor=white)](https://codecopilot.onrender.com)
+[![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Orchestrated-FF6B35?style=for-the-badge)](https://langchain-ai.github.io/langgraph/)
 
-## Quick Start (5 minutes)
+**CodeCopilot is an intelligent agentic coding assistant that understands your codebase, plans actions, runs tools safely, and helps you ship software faster — powered by the LLM of your choice.**
 
-**Prerequisites:** Python 3.12+, Docker
+[🚀 Try Live Demo](https://codecopilot.onrender.com) · [📖 Docs](docs/) · [🐛 Report Bug](https://github.com/Heshane-11/CodeCopilot/issues)
 
-1. **Setup Services**
-   ```bash
-   docker compose up -d
-   docker compose build sandbox-image
-   ```
+</div>
 
-2. **Configure Credentials**
-   ```bash
-   cp .env.example .env
-   # Edit .env and add at least one API key:
-   # OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY
-   ```
+---
 
-3. **Install & Run**
-   ```bash
-   pip install -e ".[dev]"
-   coding-assistant serve
-   ```
+## ✨ Features
 
-4. **Chat (in another terminal)**
-   ```bash
-   coding-assistant chat --workspace /path/to/your/repo
-   ```
+| Feature | Description |
+| :--- | :--- |
+| 🧠 **Agentic Reasoning** | LangGraph-powered agent loop that thinks step-by-step before acting |
+| 🔍 **Codebase Understanding** | Semantic code indexing and retrieval using pgvector embeddings |
+| 🛠️ **Safe Tool Execution** | Sandboxed tool execution (filesystem, build, test, shell) inside an isolated Docker container |
+| 🔄 **Multi-Model Support** | Works with OpenAI GPT-4, Anthropic Claude, and Google Gemini via LiteLLM |
+| 🎯 **Smart Model Routing** | Capability-aware routing — assigns the right model for planning, coding, or summarization tasks |
+| ✅ **Approval Workflows** | Critical write operations require human approval before execution |
+| 📊 **Observability** | Built-in OpenTelemetry tracing, Prometheus metrics, and Langfuse integration |
+| 🌐 **Web UI** | Clean browser-based chat interface served directly by the FastAPI backend |
+| 🔐 **Auth & Rate Limiting** | Optional JWT authentication and per-minute rate limiting |
 
-## Usage Examples
+---
 
-### Interactive Terminal Chat
+## 🌐 Live Demo
+
+> **Try CodeCopilot instantly in your browser — no setup required!**
+
+**[https://codecopilot.onrender.com](https://codecopilot.onrender.com)**
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   User (Browser / CLI)              │
+└────────────────────────┬────────────────────────────┘
+                         │  HTTP / SSE
+┌────────────────────────▼────────────────────────────┐
+│              FastAPI Control Plane API               │
+│         /v1/runs  /v1/tools  /health  /metrics      │
+└──────────┬────────────────────────────┬─────────────┘
+           │                            │
+┌──────────▼──────────┐    ┌────────────▼────────────┐
+│   LangGraph Agent   │    │    PostgreSQL + pgvector  │
+│  (Plan → Act → Obs) │    │   (Run history + index)  │
+└──────────┬──────────┘    └─────────────────────────┘
+           │
+┌──────────▼──────────┐    ┌─────────────────────────┐
+│   LiteLLM Router    │    │         Redis            │
+│  GPT / Claude /     │    │   (Session cache &       │
+│      Gemini         │    │    job queue)            │
+└──────────┬──────────┘    └─────────────────────────┘
+           │
+┌──────────▼──────────┐
+│   Docker Sandbox    │
+│  (Safe tool runner) │
+└─────────────────────┘
+```
+
+---
+
+## ⚡ Quick Start (Local)
+
+**Prerequisites:** Python 3.12+, Docker, uv (recommended)
+
+### 1. Clone & Setup
 
 ```bash
-# Start server in terminal 1
+git clone https://github.com/Heshane-11/CodeCopilot.git
+cd CodeCopilot
+```
+
+### 2. Start Infrastructure
+
+```bash
+docker compose up -d          # Starts PostgreSQL + Redis
+docker compose build sandbox  # Builds the secure sandbox image
+```
+
+### 3. Configure
+
+```bash
+cp .env.example .env
+# Edit .env and add at least ONE of:
+# OPENAI_API_KEY=sk-...
+# ANTHROPIC_API_KEY=sk-ant-...
+# GEMINI_API_KEY=AIza...
+```
+
+### 4. Install & Run
+
+```bash
+pip install -e ".[dev]"
 coding-assistant serve
+# Open http://127.0.0.1:8000 in your browser
+```
 
-# Chat in terminal 2
+### 5. Chat (Terminal)
+
+```bash
+# In a second terminal:
+coding-assistant chat --workspace /path/to/your/repo
+```
+
+---
+
+## 🔑 API Keys Setup
+
+Choose at least one LLM provider:
+
+| Provider | Environment Variable | Get Key |
+| :--- | :--- | :--- |
+| Google Gemini | `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/apikey) |
+| OpenAI | `OPENAI_API_KEY` | [OpenAI Platform](https://platform.openai.com/api-keys) |
+| Anthropic Claude | `ANTHROPIC_API_KEY` | [Anthropic Console](https://console.anthropic.com/) |
+
+---
+
+## 🧩 Usage
+
+### Web UI
+Open [http://localhost:8000](http://localhost:8000) in your browser after starting the server. No additional setup required.
+
+### Terminal Chat
+
+```bash
 coding-assistant chat --workspace /path/to/my/project
-# Type: "List all Python files"
-# Type: "/help" for available slash commands
+# Available slash commands:
+# /workspace <path>  — Switch project directory
+# /status            — Show current configuration
+# /help              — List all commands
+# /exit              — Quit
 ```
 
-### HTTP API
+### REST API
 
 ```bash
-# Create a run
-curl -s -X POST http://127.0.0.1:8000/v1/runs \
+# Start a new run
+curl -X POST http://localhost:8000/v1/runs \
   -H 'Content-Type: application/json' \
-  -d '{
-    "workspace_root": "/path/to/repo",
-    "message": "What are the main entry points in this project?"
-  }'
+  -d '{"workspace_root": "/path/to/repo", "message": "Explain the main entry points"}'
 
-# View API docs at: http://127.0.0.1:8000/docs
+# View interactive API docs
+open http://localhost:8000/docs
 ```
-
-### Slash Commands
-
-In terminal chat, use:
-- `/workspace <path>` - Change project directory
-- `/status` - Show current settings
-- `/help` - List available commands
-- `/exit` or `/quit` - Quit the client
-
-## Architecture
-
-```
-User Input
-    ↓
-LLM (Claude, GPT, Gemini)
-    ↓
-Structured Action Generation
-    ↓
-Host Validation & Approval
-    ↓
-Tool Execution (safe sandbox)
-    ↓
-Response & Learning
-```
-
-## Cloud Deployment
-
-CodeCopilot is designed to be fully cloud-ready and deployable on platforms like Render, Railway, or any VPS.
-
-### Required Environment Variables
-
-When deploying to the cloud, configure the following environment variables in your provider's dashboard:
-- `DATABASE_URL`: Connection string to your cloud PostgreSQL database (pgvector must be enabled).
-- `REDIS_URL`: Connection string to your cloud Redis instance.
-- `GEMINI_API_KEY` (or `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`): API key for the LLM.
-- `ROUTING_CONFIG_PATH`: Set to `routing.config.gemini.json` for a Gemini-only setup.
-- `ROUTING_DEFAULT_MODEL`: Set to `gemini/gemini-3.1-flash-lite` (or your preferred model).
 
 ---
 
-### Option 1: Render (One-Click Blueprint)
+## 🚀 Cloud Deployment
 
-You can deploy CodeCopilot with its database and cache automatically on Render using the provided `render.yaml` Blueprint:
-1. Push this repository to your GitHub account.
-2. In the Render Dashboard, click **New** -> **Blueprint**.
-3. Select your repository.
-4. Render will parse `render.yaml` and configure:
-   - The FastAPI web service (running the `Dockerfile`).
-   - A Redis cache instance.
-   - A PostgreSQL database (Render supports `pgvector` out-of-the-box).
-5. Enter your `GEMINI_API_KEY` when prompted and deploy.
+### Option 1: Render ⭐ (Recommended)
 
----
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Heshane-11/CodeCopilot)
 
-### Option 2: Railway Deployment
+1. Click **New +** → **Blueprint** in your [Render Dashboard](https://dashboard.render.com/).
+2. Connect your fork of this repository.
+3. Render parses `render.yaml` and provisions the web service, PostgreSQL, and Redis automatically.
+4. Add your `GEMINI_API_KEY` (or other LLM key) in the environment variables section.
+5. Click **Apply** — your deployment will be live in ~3 minutes!
 
-Railway supports deploying directly via Dockerfile:
-1. Link your GitHub repository to Railway.
-2. Create a PostgreSQL service and a Redis service in your Railway project.
-3. Add a new service from your CodeCopilot repository. Railway will automatically build the `Dockerfile`.
-4. Bind variables in the app service:
-   - Set `DATABASE_URL` to `${{Postgres.DATABASE_URL}}` (or corresponding Railway Postgres connection string)
-   - Set `REDIS_URL` to `redis://default:${{Redis.REDISPASSWORD}}@${{Redis.REDISHOST}}:${{Redis.REDISPORT}}/0`
-   - Add your API keys (`GEMINI_API_KEY`, etc.) and routing configs.
-5. Deploy the application.
+### Option 2: Railway
 
----
+1. Link this repository to a new [Railway](https://railway.app) project.
+2. Add a **PostgreSQL** and **Redis** service to the project canvas.
+3. Set the following environment variables in your web service:
+   - `DATABASE_URL` → Railway Postgres connection string
+   - `REDIS_URL` → Railway Redis connection string
+   - `GEMINI_API_KEY`, `ROUTING_CONFIG_PATH`, `ROUTING_DEFAULT_MODEL`
+4. Railway will auto-build the `Dockerfile` and deploy.
 
-### Option 3: VPS Deployment (Docker Compose)
-
-To deploy on a Virtual Private Server (VPS):
-1. Clone this repository to your VPS.
-2. Setup your `.env` file with your production API keys, production database URL, and Redis URL.
-3. Start the services using Docker Compose:
-   ```bash
-   docker compose up -d --build
-   ```
-
-## For Developers
-
-- **Core Runtime:** [docs/phase-1-core-runtime.md](docs/phase-1-core-runtime.md)
-- **Model Routing:** [docs/phase-2-model-routing.md](docs/phase-2-model-routing.md)
-- **Tool System:** [docs/phase-3-tool-system.md](docs/phase-3-tool-system.md)
-- **Sandbox & Security:** [docs/phase-4-sandbox.md](docs/phase-4-sandbox.md)
-- **Full Roadmap:** See [docs/](docs/) directory
-
-See [GETTING_STARTED.md](GETTING_STARTED.md) for detailed setup guide.
-
-Metrics: `GET http://127.0.0.1:8000/metrics`
-
-## Model routing
-
-Planner calls use capability-based routing (`routing.config.json`). Preview:
-
-### Gemini (Google)
-
-1. Set `GEMINI_API_KEY` in `.env` (from [Google AI Studio](https://aistudio.google.com/apikey)).
-2. Either use the Gemini-first routing file:
-
-   ```bash
-   ROUTING_CONFIG_PATH=routing.config.gemini.json coding-assistant serve
-   ```
-
-   or override every tier with one model:
-
-   ```bash
-   ROUTING_DEFAULT_MODEL=gemini/gemini-2.5-flash coding-assistant serve
-   ```
-
-   The default `routing.config.json` also lists `gemini/gemini-2.0-flash` in `fallback_chain` after OpenAI/Anthropic.
-
-   For Gemini-only setups, use `routing.config.gemini.json` (Gemini-only fallback chain; no OpenAI attempts).
-
-Supported LiteLLM ids include `gemini/gemini-2.5-flash`, `gemini/gemini-2.0-flash`, and `gemini/text-embedding-004` (for `EMBEDDING_MODEL`).
+### Option 3: VPS / Self-Hosted
 
 ```bash
-curl -s 'http://127.0.0.1:8000/v1/routing/resolve?capability=planning&complexity=high'
+git clone https://github.com/Heshane-11/CodeCopilot.git
+cd CodeCopilot
+cp .env.example .env
+# Fill in production DATABASE_URL, REDIS_URL, and API keys
+docker compose up -d --build
 ```
+
+### Required Environment Variables (All Platforms)
+
+| Variable | Description |
+| :--- | :--- |
+| `DATABASE_URL` | PostgreSQL connection string (pgvector enabled) |
+| `REDIS_URL` | Redis connection string |
+| `GEMINI_API_KEY` | Google Gemini API key (or use OpenAI/Anthropic) |
+| `ROUTING_CONFIG_PATH` | Set to `routing.config.gemini.json` for Gemini-only |
+| `ROUTING_DEFAULT_MODEL` | e.g. `gemini/gemini-2.5-flash` |
+
+---
+
+## 🤖 Model Routing
+
+CodeCopilot uses a capability-based routing system to assign the best model for each task type.
+
+```bash
+# Check which model will be used for a task
+curl 'http://localhost:8000/v1/routing/resolve?capability=planning&complexity=high'
+```
+
+**Gemini-only setup:**
+```bash
+ROUTING_CONFIG_PATH=routing.config.gemini.json
+ROUTING_DEFAULT_MODEL=gemini/gemini-2.5-flash
+```
+
+Supported models: `gemini/gemini-2.5-flash`, `gemini/gemini-2.0-flash`, `gpt-4o`, `claude-3-5-sonnet`, and many more via [LiteLLM](https://docs.litellm.ai/docs/providers).
+
+---
+
+## 📁 Project Structure
+
+```
+CodeCopilot/
+├── src/coding_assistant/
+│   ├── api/            # FastAPI route handlers
+│   ├── intelligence/   # LangGraph agent & planning
+│   ├── tools/          # Tool registry & handlers
+│   ├── sandbox/        # Docker sandbox runner
+│   ├── routing/        # LiteLLM model router
+│   ├── db/             # SQLAlchemy models & migrations
+│   ├── services/       # Redis client, embeddings
+│   └── observability/  # OpenTelemetry, Prometheus
+├── web/                # Frontend HTML/CSS/JS
+├── docs/               # Architecture documentation
+├── Dockerfile          # Production Docker image
+├── render.yaml         # Render Blueprint spec
+└── docker-compose.yml  # Local development stack
+```
+
+---
+
+## 📖 Documentation
+
+- [Getting Started Guide](GETTING_STARTED.md)
+- [Core Runtime](docs/phase-1-core-runtime.md)
+- [Model Routing](docs/phase-2-model-routing.md)
+- [Tool System](docs/phase-3-tool-system.md)
+- [Sandbox & Security](docs/phase-4-sandbox.md)
+
+---
+
+## 📄 License
+
+This project is open source. See [LICENSE](LICENSE) for details.
+
+---
+
+<div align="center">
+
+Built with ❤️ using FastAPI, LangGraph, and LiteLLM
+
+**[🌐 Live Demo](https://codecopilot.onrender.com) · [⭐ Star on GitHub](https://github.com/Heshane-11/CodeCopilot)**
+
+</div>
