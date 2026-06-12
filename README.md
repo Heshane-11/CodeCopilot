@@ -160,50 +160,6 @@ open http://localhost:8000/docs
 
 ---
 
-## 🚀 Cloud Deployment
-
-### Option 1: Render ⭐ (Recommended)
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Heshane-11/CodeCopilot)
-
-1. Click **New +** → **Blueprint** in your [Render Dashboard](https://dashboard.render.com/).
-2. Connect your fork of this repository.
-3. Render parses `render.yaml` and provisions the web service, PostgreSQL, and Redis automatically.
-4. Add your `GEMINI_API_KEY` (or other LLM key) in the environment variables section.
-5. Click **Apply** — your deployment will be live in ~3 minutes!
-
-### Option 2: Railway
-
-1. Link this repository to a new [Railway](https://railway.app) project.
-2. Add a **PostgreSQL** and **Redis** service to the project canvas.
-3. Set the following environment variables in your web service:
-   - `DATABASE_URL` → Railway Postgres connection string
-   - `REDIS_URL` → Railway Redis connection string
-   - `GEMINI_API_KEY`, `ROUTING_CONFIG_PATH`, `ROUTING_DEFAULT_MODEL`
-4. Railway will auto-build the `Dockerfile` and deploy.
-
-### Option 3: VPS / Self-Hosted
-
-```bash
-git clone https://github.com/Heshane-11/CodeCopilot.git
-cd CodeCopilot
-cp .env.example .env
-# Fill in production DATABASE_URL, REDIS_URL, and API keys
-docker compose up -d --build
-```
-
-### Required Environment Variables (All Platforms)
-
-| Variable | Description |
-| :--- | :--- |
-| `DATABASE_URL` | PostgreSQL connection string (pgvector enabled) |
-| `REDIS_URL` | Redis connection string |
-| `GEMINI_API_KEY` | Google Gemini API key (or use OpenAI/Anthropic) |
-| `ROUTING_CONFIG_PATH` | Set to `routing.config.gemini.json` for Gemini-only |
-| `ROUTING_DEFAULT_MODEL` | e.g. `gemini/gemini-2.5-flash` |
-
----
-
 ## 🤖 Model Routing
 
 CodeCopilot uses a capability-based routing system to assign the best model for each task type.
