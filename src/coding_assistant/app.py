@@ -52,6 +52,8 @@ def create_app() -> FastAPI:
     
     # Serve web UI
     web_dir = Path(__file__).parent.parent.parent / "web"
+    if not web_dir.exists():
+        web_dir = Path.cwd() / "web"
     if web_dir.exists():
         # Mount static files
         app.mount("/static", StaticFiles(directory=str(web_dir)), name="static")

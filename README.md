@@ -89,6 +89,59 @@ Tool Execution (safe sandbox)
 Response & Learning
 ```
 
+## Cloud Deployment
+
+CodeCopilot is designed to be fully cloud-ready and deployable on platforms like Render, Railway, or any VPS.
+
+### Required Environment Variables
+
+When deploying to the cloud, configure the following environment variables in your provider's dashboard:
+- `DATABASE_URL`: Connection string to your cloud PostgreSQL database (pgvector must be enabled).
+- `REDIS_URL`: Connection string to your cloud Redis instance.
+- `GEMINI_API_KEY` (or `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`): API key for the LLM.
+- `ROUTING_CONFIG_PATH`: Set to `routing.config.gemini.json` for a Gemini-only setup.
+- `ROUTING_DEFAULT_MODEL`: Set to `gemini/gemini-3.1-flash-lite` (or your preferred model).
+
+---
+
+### Option 1: Render (One-Click Blueprint)
+
+You can deploy CodeCopilot with its database and cache automatically on Render using the provided `render.yaml` Blueprint:
+1. Push this repository to your GitHub account.
+2. In the Render Dashboard, click **New** -> **Blueprint**.
+3. Select your repository.
+4. Render will parse `render.yaml` and configure:
+   - The FastAPI web service (running the `Dockerfile`).
+   - A Redis cache instance.
+   - A PostgreSQL database (Render supports `pgvector` out-of-the-box).
+5. Enter your `GEMINI_API_KEY` when prompted and deploy.
+
+---
+
+### Option 2: Railway Deployment
+
+Railway supports deploying directly via Dockerfile:
+1. Link your GitHub repository to Railway.
+2. Create a PostgreSQL service and a Redis service in your Railway project.
+3. Add a new service from your CodeCopilot repository. Railway will automatically build the `Dockerfile`.
+4. Bind variables in the app service:
+   - Set `DATABASE_URL` to `${{Postgres.DATABASE_URL}}` (or corresponding Railway Postgres connection string)
+   - Set `REDIS_URL` to `redis://default:${{Redis.REDISPASSWORD}}@${{Redis.REDISHOST}}:${{Redis.REDISPORT}}/0`
+   - Add your API keys (`GEMINI_API_KEY`, etc.) and routing configs.
+5. Deploy the application.
+
+---
+
+### Option 3: VPS Deployment (Docker Compose)
+
+To deploy on a Virtual Private Server (VPS):
+1. Clone this repository to your VPS.
+2. Setup your `.env` file with your production API keys, production database URL, and Redis URL.
+3. Start the services using Docker Compose:
+   ```bash
+   docker compose up -d --build
+   ```
+
 ## For Developers
 
 - **Core Runtime:** [docs/phase-1-core-runtime.md](docs/phase-1-core-runtime.md)

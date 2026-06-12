@@ -458,7 +458,7 @@
                 <div class="chat-status" style="background: transparent; border: none; color: #cbd5e0; font-size: 12px;">
                     <strong>CodeCopilot v0.1.0</strong><br>
                     AI-powered code assistant with LLM orchestration and structured tools.<br><br>
-                    <strong>API:</strong> http://127.0.0.1:8000
+                    <strong>API:</strong> <span id="api-base-url">http://127.0.0.1:8000</span>
                 </div>
             </div>
         </div>
@@ -516,7 +516,8 @@
     </div>
 
     <script>
-        const API_BASE = 'http://127.0.0.1:8000';
+        const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://127.0.0.1:8000';
+        document.getElementById('api-base-url').textContent = API_BASE;
         let currentWorkspace = '/tmp/workspace';
         let isLoading = false;
 
@@ -592,7 +593,7 @@
                 } else if (errorMsg.includes('401') || errorMsg.includes('authentication')) {
                     errorMsg = 'Authentication failed. Please configure valid API keys in .env';
                 } else if (errorMsg.includes('Connection refused')) {
-                    errorMsg = 'Cannot connect to server. Make sure it\'s running on http://127.0.0.1:8000';
+                    errorMsg = `Cannot connect to server. Make sure it's running on ${API_BASE}`;
                 }
                 
                 addMessage('assistant', `<span class="error">❌ ${errorMsg}</span>`);
@@ -736,7 +737,7 @@
                     addMessage('assistant', '<span class="success">✅ Connected to CodeCopilot server!</span>');
                 }
             } catch (error) {
-                addMessage('assistant', '<span class="error">⚠️ Cannot connect to server. Make sure it\'s running on http://127.0.0.1:8000</span>');
+                addMessage('assistant', `<span class="error">⚠️ Cannot connect to server. Make sure it's running on ${API_BASE}</span>`);
             }
         });
     </script>
