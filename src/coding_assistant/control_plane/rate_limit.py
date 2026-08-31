@@ -16,10 +16,17 @@ async def check_rate_limit(org_id: str) -> None:
     if not settings.rate_limit_enabled:
         return
 
-    client = await get_redis()
-    key = f"ratelimit:org:{org_id}"
-    count = await client.incr(key)
-    if count == 1:
-        await client.expire(key, 60)
-    if count > settings.rate_limit_per_minute:
-        raise RateLimitExceeded(org_id, settings.rate_limit_per_minute)
+    try:
+        client = await get_redis()
+        if client is None:
+            return
+        key = f"ratelimit:org:{org_id}"
+        count = await client.incr(key)
+        if count == 1:
+            await client.expire(key, 60)
+        if count > settings.rate_limit_per_minute:
+            raise RateLimitExceeded(org_id, settings.rate_limit_per_minute)
+    except Exception as exc:
+        if isinstance(exc, RateLimitExceeded):
+            raise
+        pass
