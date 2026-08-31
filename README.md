@@ -32,6 +32,22 @@
 
 ---
 
+## 🥊 How CodeCopilot Differs From Other AI Tools
+
+Unlike passive chat interfaces that only process copy-pasted text, **CodeCopilot is an autonomous software engineering agent** that operates directly on your local workspace:
+
+| Capability | Standard AI Chatbots (ChatGPT / Claude Web) | Basic Copilot Plugins | 🤖 CodeCopilot Agent |
+| :--- | :--- | :--- | :--- |
+| **Codebase Awareness** | ❌ Manual copy-pasting (1–2 files at a time) | ⚠️ Limited to active editor tab | ✅ **Full Codebase Indexing** (AST Tree-sitter & `pgvector` semantic search) |
+| **Autonomous Tool Execution** | ❌ None (Text-only output) | ❌ Cannot execute external tools | ✅ **Multi-Tool Agent Loop** (File read, patch writing, grep, linting) |
+| **Automated Code Editing** | ❌ User must manually copy & paste code | ⚠️ Inline autocomplete only | ✅ **Deterministic Multi-File Patching** (`apply_patch` directly modifies files) |
+| **Self-Verification & Testing** | ❌ Cannot verify if code works | ❌ Cannot run tests | ✅ **Automated Test Execution & Self-Healing** (Runs `pytest` & auto-fixes errors) |
+| **Model Flexibility & Routing** | ❌ Locked to one provider | ❌ Locked to vendor model | ✅ **Smart Multi-Model Routing** (Routes tasks dynamically between Gemini, GPT-4, Claude) |
+| **Security & Human-in-the-Loop** | ❌ No safety controls | ❌ No approval gating | ✅ **Configurable Approval Workflows** for critical write operations |
+| **Privacy & Self-Hosting** | ❌ Cloud-only proprietary SaaS | ❌ Proprietary SaaS | ✅ **100% Self-Hosted & Open Source** (Your code stays on your machine) |
+
+---
+
 ## 🏗️ Architecture
 
 ```
