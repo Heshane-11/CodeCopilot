@@ -33,26 +33,20 @@ def normalize_database_url(raw_url: str) -> tuple[str, dict]:
     ssl_mode = query_params.pop("sslmode", [None])[0]
     ssl_param = query_params.pop("ssl", [None])[0]
 
-    needs_ssl = (
-        ssl_mode in ("require", "verify-ca", "verify-full")
-        or ssl_param in ("require", "true", "1")
-        or (
-            parsed.hostname
-            and (
-                "render.com" in parsed.hostname
-                or "supabase" in parsed.hostname
-                or "neon.tech" in parsed.hostname
-            )
-        )
-    )
+    is_local = parsed.hostname in ("localhost", "127.0.0.1", "host.docker.internal", None)
+    explicit_disable = ssl_mode == "disable" or ssl_param in ("false", "0", "disable")
 
-    if needs_ssl:
+    # In cloud environments (Render, Supabase, Neon, etc.) or any non-localhost host,
+    # SSL is required by default unless explicitly disabled.
+    if not explicit_disable and (
+        not is_local
+        or ssl_mode in ("require", "verify-ca", "verify-full")
+        or ssl_param in ("require", "true", "1")
+    ):
         ssl_ctx = ssl.create_default_context()
         ssl_ctx.check_hostname = False
         ssl_ctx.verify_mode = ssl.CERT_NONE
         connect_args["ssl"] = ssl_ctx
-    elif ssl_mode == "disable" or ssl_param in ("false", "0", "disable"):
-        connect_args["ssl"] = False
 
     new_query = urlencode(query_params, doseq=True)
     clean_url = urlunparse((
@@ -82,16 +76,25 @@ def _get_engine():
     return _engine, _session_factory
 
 
-async def init_db(max_retries: int = 6, retry_delay: float = 3.0) -> None:
-    engine, _ = _get_engine()
+async def init_db(max_retries: int = 8, retry_delay: float = 3.0) -> None:
     for attempt in range(1, max_retries + 1):
+        engine, _ = _get_engine()
         try:
             async with engine.begin() as conn:
-                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+                try:
+                    await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+                except Exception as ext_err:
+                    logger.warning(
+                        f"Extension 'vector' create notice (may already exist or be managed): {ext_err}"
+                    )
                 await conn.run_sync(Base.metadata.create_all)
             logger.info("Database initialized successfully.")
             return
         except Exception as e:
+            try:
+                await engine.dispose()
+            except Exception:
+                pass
             if attempt == max_retries:
                 logger.error(
                     f"Failed to initialize database after {max_retries} attempts: {e}"
