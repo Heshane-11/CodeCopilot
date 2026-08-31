@@ -4,15 +4,14 @@
 
 ### AI-Powered Coding Assistant — Think, Plan, Execute
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-codecopilot.onrender.com-6366f1?style=for-the-badge&logo=render&logoColor=white)](https://codecopilot.onrender.com)
 [![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
 [![LangGraph](https://img.shields.io/badge/LangGraph-Orchestrated-FF6B35?style=for-the-badge)](https://langchain-ai.github.io/langgraph/)
 
-**CodeCopilot is an intelligent agentic coding assistant that understands your codebase, plans actions, runs tools safely, and helps you ship software faster — powered by the LLM of your choice.**
+**CodeCopilot is an intelligent agentic coding assistant that understands your codebase, plans multi-step actions, runs tools safely, and helps you ship software faster — powered by the LLM of your choice.**
 
-[🚀 Try Live Demo](https://codecopilot.onrender.com) · [📖 Docs](docs/) · [🐛 Report Bug](https://github.com/Heshane-11/CodeCopilot/issues)
+[📖 Docs](docs/) · [⚡ Quick Start](#-step-by-step-local-setup-guide) · [🐛 Report Bug](https://github.com/Heshane-11/CodeCopilot/issues)
 
 </div>
 
@@ -22,23 +21,14 @@
 
 | Feature | Description |
 | :--- | :--- |
-| 🧠 **Agentic Reasoning** | LangGraph-powered agent loop that thinks step-by-step before acting |
-| 🔍 **Codebase Understanding** | Semantic code indexing and retrieval using pgvector embeddings |
-| 🛠️ **Safe Tool Execution** | Sandboxed tool execution (filesystem, build, test, shell) inside an isolated Docker container |
-| 🔄 **Multi-Model Support** | Works with OpenAI GPT-4, Anthropic Claude, and Google Gemini via LiteLLM |
-| 🎯 **Smart Model Routing** | Capability-aware routing — assigns the right model for planning, coding, or summarization tasks |
-| ✅ **Approval Workflows** | Critical write operations require human approval before execution |
-| 📊 **Observability** | Built-in OpenTelemetry tracing, Prometheus metrics, and Langfuse integration |
-| 🌐 **Web UI** | Clean browser-based chat interface served directly by the FastAPI backend |
-| 🔐 **Auth & Rate Limiting** | Optional JWT authentication and per-minute rate limiting |
-
----
-
-## 🌐 Live Demo
-
-> **Try CodeCopilot instantly in your browser — no setup required!**
-
-**[https://codecopilot.onrender.com](https://codecopilot.onrender.com)**
+| 🧠 **Agentic Reasoning** | LangGraph-powered agent loop that thinks step-by-step before acting (Plan $\to$ Act $\to$ Observe) |
+| 🔍 **Codebase Understanding** | Full AST symbol indexing (Tree-sitter) & semantic retrieval using `pgvector` embeddings |
+| 🛠️ **Autonomous Tools** | File reading, deterministic patch editing (`apply_patch`), regex grep, and linting |
+| 🧪 **Self-Testing** | Automatically executes test suites and self-heals code if tests fail |
+| 🔄 **Multi-Model Support** | Works with Google Gemini, OpenAI GPT-4, and Anthropic Claude via LiteLLM |
+| 🎯 **Smart Model Routing** | Automatically assigns the right model tier for planning, coding, or summarization |
+| ✅ **Approval Workflows** | Critical operations require human confirmation before execution |
+| 🌐 **Interactive Web UI** | Modern browser chat interface with live workspace switching |
 
 ---
 
@@ -46,7 +36,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                   User (Browser / CLI)              │
+│               User (Browser Web UI / CLI)           │
 └────────────────────────┬────────────────────────────┘
                          │  HTTP / SSE
 ┌────────────────────────▼────────────────────────────┐
@@ -61,121 +51,172 @@
            │
 ┌──────────▼──────────┐    ┌─────────────────────────┐
 │   LiteLLM Router    │    │         Redis            │
-│  GPT / Claude /     │    │   (Session cache &       │
-│      Gemini         │    │    job queue)            │
+│  Gemini / GPT-4 /   │    │   (Session cache &       │
+│      Claude         │    │    in-memory fallback)   │
 └──────────┬──────────┘    └─────────────────────────┘
            │
 ┌──────────▼──────────┐
-│   Docker Sandbox    │
-│  (Safe tool runner) │
+│   Tool Sandbox      │
+│  (Docker / Local)   │
 └─────────────────────┘
 ```
 
 ---
 
-## ⚡ Quick Start (Local)
+## ⚡ Step-by-Step Local Setup Guide
 
-**Prerequisites:** Python 3.12+, Docker, uv (recommended)
+Follow this guide to run CodeCopilot locally on your computer and connect it to any project on your machine.
 
-### 1. Clone & Setup
+### 📋 Prerequisites
+- **Python 3.12+** installed on your system ([Download Python](https://www.python.org/downloads/))
+- **Astral `uv`** (Recommended for ultra-fast setup):
+  - Windows: `powershell -c "irm https://astral.sh/uv/install.ps1 | iex"`
+  - Mac/Linux: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- **PostgreSQL Database** (Local via Docker OR a free cloud database from [Render](https://render.com) / [Neon](https://neon.tech) / [Supabase](https://supabase.com))
+- An **LLM API Key** (e.g. Free [Google Gemini API Key](https://aistudio.google.com/apikey) or OpenAI/Anthropic key)
 
+---
+
+### Step 1: Download / Clone the Repository
+
+**Option A: Using Git (Recommended)**
 ```bash
 git clone https://github.com/Heshane-11/CodeCopilot.git
 cd CodeCopilot
 ```
 
-### 2. Start Infrastructure
+**Option B: Download ZIP**
+1. Click the green **Code** button at the top of the GitHub repository.
+2. Select **Download ZIP**.
+3. Extract the ZIP folder on your computer and open terminal in the `CodeCopilot` folder:
+   ```bash
+   cd CodeCopilot
+   ```
 
+---
+
+### Step 2: Install Dependencies
+
+Using `uv` (Recommended):
 ```bash
-docker compose up -d          # Starts PostgreSQL + Redis
-docker compose build sandbox  # Builds the secure sandbox image
+uv pip install -e ".[dev]"
 ```
 
-### 3. Configure
-
-```bash
-cp .env.example .env
-# Edit .env and add at least ONE of:
-# OPENAI_API_KEY=sk-...
-# ANTHROPIC_API_KEY=sk-ant-...
-# GEMINI_API_KEY=AIza...
-```
-
-### 4. Install & Run
-
+*Or using standard pip:*
 ```bash
 pip install -e ".[dev]"
-coding-assistant serve
-# Open http://127.0.0.1:8000 in your browser
-```
-
-### 5. Chat (Terminal)
-
-```bash
-# In a second terminal:
-coding-assistant chat --workspace /path/to/your/repo
 ```
 
 ---
 
-## 🔑 API Keys Setup
+### Step 3: Configure Environment Variables (`.env`)
 
-Choose at least one LLM provider:
-
-| Provider | Environment Variable | Get Key |
-| :--- | :--- | :--- |
-| Google Gemini | `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/apikey) |
-| OpenAI | `OPENAI_API_KEY` | [OpenAI Platform](https://platform.openai.com/api-keys) |
-| Anthropic Claude | `ANTHROPIC_API_KEY` | [Anthropic Console](https://console.anthropic.com/) |
-
----
-
-## 🧩 Usage
-
-### Web UI
-Open [http://localhost:8000](http://localhost:8000) in your browser after starting the server. No additional setup required.
-
-### Terminal Chat
+Create your `.env` file by copying the example:
 
 ```bash
-coding-assistant chat --workspace /path/to/my/project
-# Available slash commands:
-# /workspace <path>  — Switch project directory
-# /status            — Show current configuration
-# /help              — List all commands
-# /exit              — Quit
+# Windows PowerShell:
+Copy-Item .env.example .env
+
+# Mac / Linux:
+cp .env.example .env
 ```
 
-### REST API
+Open `.env` in your code editor and configure:
 
-```bash
-# Start a new run
-curl -X POST http://localhost:8000/v1/runs \
-  -H 'Content-Type: application/json' \
-  -d '{"workspace_root": "/path/to/repo", "message": "Explain the main entry points"}'
+```env
+# 1. Database Connection (Use local Postgres OR free cloud Postgres like Render/Neon/Supabase)
+DATABASE_URL=postgresql+asyncpg://user:password@hostname:5432/dbname
 
-# View interactive API docs
-open http://localhost:8000/docs
-```
+# 2. LLM API Key (Add your API Key)
+GEMINI_API_KEY=AIzaSy...
+# Or for OpenAI:
+# OPENAI_API_KEY=sk-...
 
----
-
-## 🤖 Model Routing
-
-CodeCopilot uses a capability-based routing system to assign the best model for each task type.
-
-```bash
-# Check which model will be used for a task
-curl 'http://localhost:8000/v1/routing/resolve?capability=planning&complexity=high'
-```
-
-**Gemini-only setup:**
-```bash
+# 3. Model Configuration (Default is Gemini)
 ROUTING_CONFIG_PATH=routing.config.gemini.json
-ROUTING_DEFAULT_MODEL=gemini/gemini-2.5-flash
+ROUTING_DEFAULT_MODEL=gemini/gemini-3.1-flash-lite
+
+# 4. Sandbox Backend (Set to 'local' for running without Docker)
+SANDBOX_BACKEND=local
 ```
 
-Supported models: `gemini/gemini-2.5-flash`, `gemini/gemini-2.0-flash`, `gpt-4o`, `claude-3-5-sonnet`, and many more via [LiteLLM](https://docs.litellm.ai/docs/providers).
+---
+
+### Step 4: Start the CodeCopilot Server
+
+Run the server command:
+
+```bash
+uv run coding-assistant serve
+```
+*(or `python -m coding_assistant serve`)*
+
+You will see the startup confirmation:
+```text
+🚀 Starting CodeCopilot server at http://127.0.0.1:8000
+📖 API documentation at http://127.0.0.1:8000/docs
+INFO: Application startup complete.
+```
+
+---
+
+### Step 5: Open Web UI & Point to Any Project
+
+1. Open your browser and go to:
+   👉 **`http://localhost:8000`**
+
+2. In the left sidebar under **`WORKSPACE`**, enter the full folder path of the project you want the AI to work on:
+   - **Windows Example**: `C:\Users\username\Projects\MyAwesomeApp`
+   - **Mac/Linux Example**: `/home/username/projects/MyAwesomeApp`
+
+3. Click the **`Set Workspace`** button.
+
+---
+
+## 🎯 Usage & Example Prompts
+
+Once your workspace is connected, you can ask CodeCopilot anything about your project:
+
+### 1. 🔍 Codebase Exploration & Architecture
+> *"Explain this repo, its file structure, and its main entry points."*
+> *"List all API routes and authentication middleware in this project."*
+
+### 2. 🐛 Bug Finding & Security Audit
+> *"Scan this project for potential memory leaks, unhandled exceptions, and security vulnerabilities."*
+> *"Why is the user login session expiring prematurely in auth.py?"*
+
+### 3. ✍️ Autonomous Code Implementation
+> *"Add a new payment webhook handler in routes/payments.py to process Stripe events."*
+> *"Refactor the database queries in services/user_service.py to use async SQLAlchemy."*
+
+### 4. 🧪 Automated Testing & Fixing
+> *"Generate comprehensive pytest unit tests for the functions in utils/parser.py."*
+
+---
+
+## 💻 Terminal CLI Chat (Alternative)
+
+You can also use CodeCopilot directly from your terminal:
+
+```bash
+uv run coding-assistant chat --workspace "C:\path\to\your\project"
+```
+
+Available slash commands in CLI:
+- `/workspace <path>` — Switch project folder on the fly
+- `/status` — View active models, tokens, and database status
+- `/help` — List all commands
+- `/exit` — Exit CLI
+
+---
+
+## 🔑 LLM Provider Options
+
+| Provider | Environment Variable | Model Example | Get Key |
+| :--- | :--- | :--- | :--- |
+| **Google Gemini** | `GEMINI_API_KEY` | `gemini/gemini-3.1-flash-lite`, `gemini/gemini-2.0-flash` | [Google AI Studio](https://aistudio.google.com/apikey) |
+| **OpenAI** | `OPENAI_API_KEY` | `gpt-4o`, `gpt-4o-mini` | [OpenAI Console](https://platform.openai.com/api-keys) |
+| **Anthropic** | `ANTHROPIC_API_KEY` | `claude-3-5-sonnet` | [Anthropic Console](https://console.anthropic.com/) |
 
 ---
 
@@ -184,43 +225,32 @@ Supported models: `gemini/gemini-2.5-flash`, `gemini/gemini-2.0-flash`, `gpt-4o`
 ```
 CodeCopilot/
 ├── src/coding_assistant/
-│   ├── api/            # FastAPI route handlers
-│   ├── intelligence/   # LangGraph agent & planning
-│   ├── tools/          # Tool registry & handlers
-│   ├── sandbox/        # Docker sandbox runner
-│   ├── routing/        # LiteLLM model router
-│   ├── db/             # SQLAlchemy models & migrations
-│   ├── services/       # Redis client, embeddings
-│   └── observability/  # OpenTelemetry, Prometheus
-├── web/                # Frontend HTML/CSS/JS
-├── docs/               # Architecture documentation
-├── Dockerfile          # Production Docker image
-├── render.yaml         # Render Blueprint spec
-└── docker-compose.yml  # Local development stack
+│   ├── api/            # FastAPI REST & SSE endpoints
+│   ├── intelligence/   # LangGraph agent orchestration & planning
+│   ├── tools/          # Autonomous tool handlers (grep, AST search, patch)
+│   ├── sandbox/        # Sandbox execution engine (Docker & Local)
+│   ├── routing/        # LiteLLM capability-aware model router
+│   ├── db/             # SQLAlchemy asyncpg models & session management
+│   ├── services/       # In-memory & Redis cache, run worker
+│   └── observability/  # OpenTelemetry tracing & Prometheus metrics
+├── web/                # Clean browser chat interface (HTML/CSS/JS)
+├── docs/               # Complete phase documentation
+├── tests/              # Pytest test suite (64+ tests)
+├── Dockerfile          # Production container image
+└── pyproject.toml      # Project manifest & dependencies
 ```
-
----
-
-## 📖 Documentation
-
-- [Getting Started Guide](GETTING_STARTED.md)
-- [Core Runtime](docs/phase-1-core-runtime.md)
-- [Model Routing](docs/phase-2-model-routing.md)
-- [Tool System](docs/phase-3-tool-system.md)
-- [Sandbox & Security](docs/phase-4-sandbox.md)
 
 ---
 
 ## 📄 License
 
-This project is open source. See [LICENSE](LICENSE) for details.
-
----
+This project is open source under the MIT License. See [LICENSE](LICENSE) for details.
 
 <div align="center">
 
-Built with ❤️ using FastAPI, LangGraph, and LiteLLM
+Built with ❤️ using **FastAPI**, **LangGraph**, and **LiteLLM**
 
-**[🌐 Live Demo](https://codecopilot.onrender.com) · [⭐ Star on GitHub](https://github.com/Heshane-11/CodeCopilot)**
+⭐ **Star on GitHub**: [Heshane-11/CodeCopilot](https://github.com/Heshane-11/CodeCopilot)
 
 </div>
+
